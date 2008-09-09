@@ -3,9 +3,11 @@
 
 # main repository
 darcs / http://openengine.dk/code/openengine
+darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
 
 # project repository
 darcs /projects/OERacer http://openengine.dk/code/projects/OERacer
+darcs-dev /projects/OERacer fh.daimi.au.dk:/users/cgd/code/projects/OERacer
 
 # required extensions
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
@@ -15,6 +17,14 @@ darcs /extensions/OBJResource            http://openengine.dk/code/extensions/OB
 darcs /extensions/FixedTimeStepPhysics   http://openengine.dk/code/extensions/FixedTimeStepPhysics
 darcs /extensions/AccelerationStructures http://openengine.dk/code/extensions/AccelerationStructures
 darcs /extensions/GenericHandlers        http://openengine.dk/code/extensions/GenericHandlers
+
+darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/extensions/SDL
+darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
+darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
+darcs-dev /extensions/OBJResource            fh.daimi.au.dk:/users/cgd/code/extensions/OBJResource
+darcs-dev /extensions/AccelerationStructures fh.daimi.au.dk:/users/cgd/code/extensions/AccelerationStructures
+darcs-dev /extensions/FixedTimeStepPhysics   fh.daimi.au.dk:/users/cgd/code/extensions/FixedTimeStepPhysics
+darcs-dev /extensions/GenericHandlers        fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
 
 # windows libraries
 win32 /libraries http://openengine.dk/data/libraries/boost-win32.zip
