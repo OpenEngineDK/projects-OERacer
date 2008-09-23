@@ -10,6 +10,7 @@ darcs /projects/OERacer http://openengine.dk/code/projects/OERacer
 darcs-dev /projects/OERacer fh.daimi.au.dk:/users/cgd/code/projects/OERacer
 
 # required extensions
+darcs /extensions/SetupHelpers           http://openengine.dk/code/extensions/SetupHelpers
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/TGAResource            http://openengine.dk/code/extensions/TGAResource
@@ -18,6 +19,7 @@ darcs /extensions/FixedTimeStepPhysics   http://openengine.dk/code/extensions/Fi
 darcs /extensions/AccelerationStructures http://openengine.dk/code/extensions/AccelerationStructures
 darcs /extensions/GenericHandlers        http://openengine.dk/code/extensions/GenericHandlers
 
+darcs-dev /extensions/SetupHelpers           fh.daimi.au.dk:/users/cgd/code/extensions/SetupHelpers
 darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/extensions/SDL
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
