@@ -16,19 +16,9 @@ ADD_EXECUTABLE(OERacer ${OERACER_SOURCES})
 
 # Project dependencies
 TARGET_LINK_LIBRARIES(OERacer
-  OpenEngine_Core
-  OpenEngine_Logging
-  OpenEngine_Display
-  OpenEngine_Devices
-  OpenEngine_Renderers
-  OpenEngine_Renderers_OpenGL
-  OpenEngine_Resources
-  OpenEngine_Scene
   OpenEngine_Utils
   # Extensions
-  Extensions_SDL
-  Extensions_TGAResource
-  Extensions_OBJResource
+  Extensions_SetupHelpers
   Extensions_FixedTimeStepPhysics
   Extensions_GenericHandlers
   ${BOOST_SERIALIZATION_LIB}

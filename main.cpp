@@ -7,40 +7,25 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
-// OpenEngine stuff
-#include <Meta/Config.h>
-
-// Serialization (must be first)
-#include <fstream>
+// Include the serialization header
+// The archives must be defined before any serializable objects so
+// this must be first.
 #include <Utils/Serialization.h>
+#include <fstream>
 
-// Core structures
-#include <Core/Engine.h>
+// Simple setup of a rendering engine
+#include <Utils/SimpleSetup.h>
 
 // Display structures
 #include <Display/FollowCamera.h>
-#include <Display/Frustum.h>
-#include <Display/InterpolatedViewingVolume.h>
-#include <Display/ViewingVolume.h>
-// SDL implementation
-#include <Display/SDLFrame.h>
-#include <Devices/SDLInput.h>
 
 // Rendering structures
 #include <Renderers/IRenderNode.h>
-// OpenGL rendering implementation
-#include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/OpenGL/RenderingView.h>
-#include <Renderers/OpenGL/TextureLoader.h>
 
 // Resources
 #include <Resources/IModelResource.h>
-#include <Resources/File.h>
-#include <Resources/DirectoryManager.h>
 #include <Resources/ResourceManager.h>
-// OBJ and TGA plugins
-#include <Resources/TGAResource.h>
-#include <Resources/OBJResource.h>
 
 // Scene structures
 #include <Scene/SceneNode.h>
@@ -56,11 +41,7 @@
 #include <Scene/ASDotVisitor.h>
 #include <Renderers/AcceleratedRenderingView.h>
 
-// Utilities and logger
-#include <Logging/Logger.h>
-#include <Logging/StreamLogger.h>
 #include <Utils/MoveHandler.h>
-#include <Utils/QuitHandler.h>
 #include <Utils/Statistics.h>
 
 // FixedTimeStepPhysics extension
@@ -74,47 +55,34 @@
 using namespace OpenEngine::Core;
 using namespace OpenEngine::Logging;
 using namespace OpenEngine::Devices;
-using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Renderers;
 using namespace OpenEngine::Resources;
 using namespace OpenEngine::Utils;
 using namespace OpenEngine::Physics;
 
+using OpenEngine::Renderers::OpenGL::RenderingView;
+
 // Configuration structure to pass around to the setup methods
 struct Config {
-    IEngine&              engine;
-    IFrame*               frame;
-    Viewport*             viewport;
-    IViewingVolume*       viewingvolume;
+    SimpleSetup           setup;
     FollowCamera*         camera;
-    Frustum*              frustum;
-    IRenderer*            renderer;
-    IMouse*               mouse;
-    IKeyboard*            keyboard;
     ISceneNode*           renderingScene;
     ISceneNode*           dynamicScene;
     ISceneNode*           staticScene;
     ISceneNode*           physicScene;
     RigidBox*             physicBody;
     FixedTimeStepPhysics* physics;
-    bool                  resourcesLoaded;
-    Config(IEngine& engine)
-        : engine(engine)
-        , frame(NULL)
-        , viewport(NULL)
-        , viewingvolume(NULL)
+    Config()
+        : setup(SimpleSetup("<<OpenEngine Racer>>"))
         , camera(NULL)
-        , frustum(NULL)
-        , renderer(NULL)
-        , mouse(NULL)
-        , keyboard(NULL)
         , renderingScene(NULL)
         , dynamicScene(NULL)
         , staticScene(NULL)
         , physicScene(NULL)
         , physics(NULL)
-        , resourcesLoaded(false)
-    {}
+    {
+        
+    }
 };
 
 // Forward declaration of the setup methods
@@ -127,8 +95,8 @@ void SetupDevices(Config&);
 void SetupDebugging(Config&);
 
 int main(int argc, char** argv) {
-    // Setup logging facilities.
-    Logger::AddLogger(new StreamLogger(&std::cout));
+
+    Config config;
 
     // Print usage info.
     logger.info << "========= Running The OpenEngine Racer Project =========" << logger.end;
@@ -149,10 +117,6 @@ int main(int argc, char** argv) {
     logger.info << "  rotate:          mouse" << logger.end;
     logger.info << logger.end;
 
-    // Create an engine and config object
-    Engine* engine = new Engine();
-    Config config(*engine);
-
     // Setup the engine
     SetupResources(config);
     SetupDisplay(config);
@@ -162,130 +126,62 @@ int main(int argc, char** argv) {
     SetupDevices(config);
     
     // Possibly add some debugging stuff
-    // SetupDebugging(config);
+    //config.setup.EnableDebugging();
+    //SetupDebugging(config);
 
     // Start up the engine.
-    engine->Start();
+    config.setup.GetEngine().Start();
 
     // Return when the engine stops.
-    delete engine;
     return EXIT_SUCCESS;
 }
 
 void SetupResources(Config& config) {
-    // set the resources directory
-    // @todo we should check that this path exists
-    string resources = "projects/OERacer/data/";
-    DirectoryManager::AppendPath(resources);
-
-    // load resource plug-ins
-    ResourceManager<IModelResource>::AddPlugin(new OBJPlugin());
-    ResourceManager<ITextureResource>::AddPlugin(new TGAPlugin());
-
-    config.resourcesLoaded = true;
+    config.setup.AddDataDirectory("projects/OERacer/data/");
 }
 
 void SetupDisplay(Config& config) {
-    if (config.frame         != NULL ||
-        config.viewingvolume != NULL ||
-        config.camera        != NULL ||
-        config.frustum       != NULL ||
-        config.viewport      != NULL)
-        throw Exception("Setup display dependencies are not satisfied.");
-
-    config.frame         = new SDLFrame(800, 600, 32);
-    config.viewingvolume = new InterpolatedViewingVolume(*(new ViewingVolume()));
-    config.camera        = new FollowCamera( *config.viewingvolume );
-    config.frustum       = new Frustum(*config.camera, 20, 3000);
-    config.viewport      = new Viewport(*config.frame);
-    config.viewport->SetViewingVolume(config.frustum);
-
-    config.engine.InitializeEvent().Attach(*config.frame);
-    config.engine.ProcessEvent().Attach(*config.frame);
-    config.engine.DeinitializeEvent().Attach(*config.frame);
+    config.camera        = new FollowCamera( *config.setup.GetCamera() );
+    config.setup.SetCamera(*config.camera);
 }
 
 void SetupRendering(Config& config) {
-    if (config.viewport == NULL ||
-        config.renderer != NULL ||
-        config.renderingScene == NULL)
-        throw Exception("Setup renderer dependencies are not satisfied.");
-
-    // Composite rendering view via. multiple inheritance.
-    // Uses RenderingView for drawing and AcceleratedRenderingView for clipping. 
-    class MyRenderingView : 
-        public RenderingView,
-        public AcceleratedRenderingView {
-    public:
-        MyRenderingView(Viewport& viewport)
-            : IRenderingView(viewport)
-            , RenderingView(viewport)
-            , AcceleratedRenderingView(viewport) {}
-    };
-
-    // Create a renderer
-    config.renderer = new Renderer();
-
-    // Setup a rendering view
-    MyRenderingView* rv = new MyRenderingView(*config.viewport);
-    config.renderer->ProcessEvent().Attach(*rv);
-
     // Add rendering initialization tasks
-    TextureLoader* tl = new TextureLoader();
-    DisplayListTransformer* dlt = new DisplayListTransformer(rv);
-    config.renderer->InitializeEvent().Attach(*tl);
-    config.renderer->InitializeEvent().Attach(*dlt);
+    DisplayListTransformer* dlt =
+        new DisplayListTransformer(
+            new RenderingView(
+                *(new Viewport(config.setup.GetFrame()))));
+    //config.renderer->InitializeEvent().Attach(*tl);
+    config.setup.GetRenderer().InitializeEvent().Attach(*dlt);
 
     // Transform the scene to use vertex arrays
     VertexArrayTransformer vaT;
     vaT.Transform(*config.renderingScene);
 
     // Supply the scene to the renderer
-    config.renderer->SetSceneRoot(config.renderingScene);
-
-    config.engine.InitializeEvent().Attach(*config.renderer);
-    config.engine.ProcessEvent().Attach(*config.renderer);
-    config.engine.DeinitializeEvent().Attach(*config.renderer);
+    delete config.setup.GetScene();
+    config.setup.SetScene(*config.renderingScene);
 }
 
 void SetupDevices(Config& config) {
-    if (config.mouse    != NULL ||
-        config.keyboard != NULL ||
-        config.camera  == NULL ||
-        config.physics  == NULL ||
-        config.physicBody == NULL)
-        throw Exception("Setup keyboard dependencies are not satisfied.");
-
-    // Create the mouse and keyboard input modules
-    SDLInput* input = new SDLInput();
-    config.engine.InitializeEvent().Attach(*input);
-    config.engine.ProcessEvent().Attach(*input);
-    config.engine.DeinitializeEvent().Attach(*input);
-    config.keyboard = input;
-    config.mouse    = input;
-
-    // Bind the quit handler
-    QuitHandler* quit_h = new QuitHandler(config.engine);
-    config.keyboard->KeyEvent().Attach(*quit_h);
-
     // Register movement handler to be able to move the camera
-    MoveHandler* move_h = new MoveHandler(*config.camera, *config.mouse);
-    config.keyboard->KeyEvent().Attach(*move_h);
+    MoveHandler* move_h = new MoveHandler(*config.camera, config.setup.GetMouse());
+    config.setup.GetKeyboard().KeyEvent().Attach(*move_h);
 
     // Keyboard bindings to the rigid box and camera
-    KeyboardHandler* keyHandler = new KeyboardHandler(config.engine,
+    KeyboardHandler* keyHandler = new KeyboardHandler(config.setup.GetEngine(),
                                                       config.camera,
                                                       config.physicBody,
                                                       config.physics);
-    config.keyboard->KeyEvent().Attach(*keyHandler);
+    config.setup.GetKeyboard().KeyEvent().Attach(*keyHandler);
 
-    config.engine.InitializeEvent().Attach(*keyHandler);
-    config.engine.ProcessEvent().Attach(*keyHandler);
-    config.engine.DeinitializeEvent().Attach(*keyHandler);
+    config.setup.GetEngine().InitializeEvent().Attach(*keyHandler);
+    config.setup.GetEngine().ProcessEvent().Attach(*keyHandler);
+    config.setup.GetEngine().DeinitializeEvent().Attach(*keyHandler);
 
-    config.engine.InitializeEvent().Attach(*move_h);
-    config.engine.ProcessEvent().Attach(*move_h);
-    config.engine.DeinitializeEvent().Attach(*move_h);
+    config.setup.GetEngine().InitializeEvent().Attach(*move_h);
+    config.setup.GetEngine().ProcessEvent().Attach(*move_h);
+    config.setup.GetEngine().DeinitializeEvent().Attach(*move_h);
 }
 
 void SetupPhysics(Config& config) {
@@ -326,17 +222,16 @@ void SetupPhysics(Config& config) {
 
     // Add to engine for processing time (with its timer)
     FixedTimeStepPhysicsTimer* ptimer = new FixedTimeStepPhysicsTimer(*config.physics);
-    config.engine.InitializeEvent().Attach(*config.physics);
-    config.engine.ProcessEvent().Attach(*ptimer);
-    config.engine.DeinitializeEvent().Attach(*config.physics);
+    config.setup.GetEngine().InitializeEvent().Attach(*config.physics);
+    config.setup.GetEngine().ProcessEvent().Attach(*ptimer);
+    config.setup.GetEngine().DeinitializeEvent().Attach(*config.physics);
 }
 
 void SetupScene(Config& config) {
     if (config.dynamicScene    != NULL ||
         config.staticScene     != NULL ||
         config.physicScene     != NULL ||
-        config.renderingScene  != NULL ||
-        config.resourcesLoaded == false)
+        config.renderingScene  != NULL )
         throw Exception("Setup scene dependencies are not satisfied.");
 
     // Create scene nodes
@@ -422,19 +317,13 @@ void SetupScene(Config& config) {
 
 void SetupDebugging(Config& config) {
 
-    // Visualization of the frustum
-    if (config.frustum != NULL) {
-        config.frustum->VisualizeClipping(true);
-        config.renderingScene->AddNode(config.frustum->GetFrustumNode());
-    }
-
-    // add the RigidBox to the scene, for debuging
+    // add the RigidBox to the scene, for debugging
     if (config.physicBody != NULL) {
         config.renderingScene->AddNode(config.physicBody->GetRigidBoxNode());
     }
 
     // Add Statistics module
-    config.engine.ProcessEvent().Attach(*(new OpenEngine::Utils::Statistics(1000)));
+    //config.engine.ProcessEvent().Attach(*(new OpenEngine::Utils::Statistics(1000)));
 
     // Create dot graphs of the various scene graphs
     map<string, ISceneNode*> scenes;
