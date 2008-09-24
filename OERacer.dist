@@ -37,7 +37,7 @@ win32 /libraries http://openengine.dk/data/libraries/sdl-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/dlls-win32.zip
 
 # darwin libraries
-darwin /libraries http://openengine.dk/data/libraries/Collada-mac.tar.gz
+darwin /libraries http://openengine.dk/data/libraries/collada-osx-i32.tar.gz
 darwin /libraries http://openengine.dk/data/libraries/pcre-osx-i32.zip
 darwin /libraries http://openengine.dk/data/libraries/pcrecpp-osx-i32.zip
 
