@@ -35,6 +35,7 @@ win32 /libraries http://openengine.dk/data/libraries/boost-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/glew-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/sdl-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/dlls-win32.zip
+win   /libraries http://openengine.dk/data/libraries/colladadom2.1-win32.zip
 
 # darwin libraries
 darwin /libraries http://openengine.dk/data/libraries/collada-osx-i32.tar.gz
