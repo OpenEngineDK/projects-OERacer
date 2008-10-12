@@ -44,6 +44,9 @@ darwin /libraries http://openengine.dk/data/libraries/colladadom2.1-osx-i32.zip
 darwin /libraries http://openengine.dk/data/libraries/pcre-osx-i32.zip
 darwin /libraries http://openengine.dk/data/libraries/pcrecpp-osx-i32.zip
 
+# linux libraries
+linux /libraries http://www.openengine.dk/data/libraries/collada-linux.tar.gz
+
 # project data
 any /projects/OERacer/data http://openengine.dk/data/models/Sahara001.zip
 any /projects/OERacer/data http://openengine.dk/data/models/FutureTank.zip
