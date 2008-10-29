@@ -20,7 +20,6 @@
 #include <Display/FollowCamera.h>
 
 // Rendering structures
-#include <Renderers/IRenderNode.h>
 #include <Renderers/OpenGL/RenderingView.h>
 
 // Resources
