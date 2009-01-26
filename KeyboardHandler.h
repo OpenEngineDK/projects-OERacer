@@ -94,7 +94,7 @@ public:
     }
 
     void Handle(KeyboardEventArg arg) {
-        (arg.type == KeyboardEventArg::PRESS) ? KeyDown(arg) : KeyUp(arg);
+        (arg.type == OpenEngine::Devices::EVENT_PRESS) ? KeyDown(arg) : KeyUp(arg);
     }
 
     void KeyDown(KeyboardEventArg arg) {
