@@ -7,6 +7,9 @@
 // See the GNU General Public License for more details (see LICENSE). 
 //--------------------------------------------------------------------
 
+// OpenEngine stuff
+#include <Meta/Config.h>
+
 // Include the serialization header
 // The archives must be defined before any serializable objects so
 // this must be first.
