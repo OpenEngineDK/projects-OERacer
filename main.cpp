@@ -21,6 +21,7 @@
 
 // Display structures
 #include <Display/FollowCamera.h>
+#include <Display/ViewingVolume.h>
 
 // Rendering structures
 #include <Renderers/OpenGL/RenderingView.h>
@@ -163,6 +164,37 @@ void SetupRendering(Config& config) {
     // Supply the scene to the renderer
     delete config.setup.GetScene();
     config.setup.SetScene(*config.renderingScene);
+
+    //add frustrum cameras
+    int width = 800;
+    int height = 600;
+
+    // bottom right
+    Camera* cam_br = new Camera(*(new ViewingVolume()));
+    cam_br->SetPosition(Vector<3,float>(1000,1000,1000));
+    cam_br->LookAt(0,0,0);
+    Viewport* vp_br = new Viewport(width/2,0, width,height/2);
+    vp_br->SetViewingVolume(cam_br);
+    RenderingView* rv_br = new RenderingView(*vp_br);
+    config.setup.GetRenderer().ProcessEvent().Attach(*rv_br);
+
+    // top right
+    Camera* cam_tr = new Camera(*(new ViewingVolume()));
+    cam_tr->SetPosition(Vector<3,float>(0,2000,0));
+    cam_tr->LookAt(0,0,0);
+    Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
+    vp_tr->SetViewingVolume(cam_tr);
+    RenderingView* rv_tr = new RenderingView(*vp_tr);
+    config.setup.GetRenderer().ProcessEvent().Attach(*rv_tr);
+
+    // top left
+    Camera* cam_tl = new Camera(*(new ViewingVolume()));
+    cam_tl->SetPosition(Vector<3,float>(0,1000,0));
+    cam_tl->LookAt(0,0,0);
+    Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
+    vp_tl->SetViewingVolume(cam_tl);
+    RenderingView* rv_tl = new RenderingView(*vp_tl);
+    config.setup.GetRenderer().ProcessEvent().Attach(*rv_tl);
 }
 
 void SetupDevices(Config& config) {
