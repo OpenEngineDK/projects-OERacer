@@ -21,6 +21,7 @@
 
 // Display structures
 #include <Display/FollowCamera.h>
+#include <Display/InterpolatedViewingVolume.h>
 #include <Display/ViewingVolume.h>
 
 // Rendering structures
@@ -76,7 +77,7 @@ struct Config {
     RigidBox*             physicBody;
     FixedTimeStepPhysics* physics;
     Config()
-        : setup(SimpleSetup("<<OpenEngine Racer>>"))
+        : setup(SimpleSetup("<<OpenEngine Racer>>", new Viewport(0,0,400,300)))
         , camera(NULL)
         , renderingScene(NULL)
         , dynamicScene(NULL)
@@ -144,7 +145,7 @@ void SetupResources(Config& config) {
 }
 
 void SetupDisplay(Config& config) {
-    config.camera        = new FollowCamera( *config.setup.GetCamera() );
+    config.camera  = new FollowCamera( *(new InterpolatedViewingVolume(*config.setup.GetCamera() )));
     config.setup.SetCamera(*config.camera);
 }
 
