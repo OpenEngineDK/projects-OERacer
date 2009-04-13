@@ -26,9 +26,12 @@ using OpenEngine::Utils::Timer;
 
 namespace keys = OpenEngine::Devices;
 
-class KeyboardHandler : public IModule, public IListener<KeyboardEventArg> {
+class KeyboardHandler : public IModule, 
+                        public IListener<KeyboardEventArg>,
+                        public IListener<JoystickAxisEventArg> {
 private:
-    bool up, down, left, right, mod;
+    float up, down, left, right;
+    bool mod;
     float step;
     Camera* camera;
     RigidBox* box;
@@ -41,10 +44,10 @@ public:
                     Camera* camera,
                     RigidBox* box,
                     FixedTimeStepPhysics* physics)
-        : up(false)
-        , down(false)
-        , left(false)
-        , right(false)
+        : up(0)
+        , down(0)
+        , left(0)
+        , right(0)
         , camera(camera)
         , box(box)
         , physics(physics)
@@ -58,6 +61,7 @@ public:
     void Handle(DeinitializeEventArg arg) {}
     void Handle(ProcessEventArg arg) {
 
+
         float delta = (float) timer.GetElapsedTimeAndReset().AsInt() / 100000;
 
         if (box == NULL || !( up || down || left || right )) return;
@@ -66,30 +70,37 @@ public:
         static float turn = 550.0f;
         Matrix<3,3,float> m(box->GetRotationMatrix());
 
+        
+
         // Forward 
-        if( up ){
+        if( up > 0.0 ){
+            
             Vector<3,float> dir = m.GetRow(0) * delta;
-            box->AddForce(dir * speed, 1);
-            box->AddForce(dir * speed, 2);
-            box->AddForce(dir * speed, 3);
-            box->AddForce(dir * speed, 4);
+            float sp = speed * up;
+            box->AddForce(dir * sp, 1);
+            box->AddForce(dir * sp, 2);
+            box->AddForce(dir * sp, 3);
+            box->AddForce(dir * sp, 4);
         }
-        if( down ){
+        if( down > 0.0){
             Vector<3,float> dir = -m.GetRow(0) * delta;
-            box->AddForce(dir * speed, 5);
-            box->AddForce(dir * speed, 6);
-            box->AddForce(dir * speed, 7);
-            box->AddForce(dir * speed, 8);
+            float sp = speed * down;
+            box->AddForce(dir * sp, 5);
+            box->AddForce(dir * sp, 6);
+            box->AddForce(dir * sp, 7);
+            box->AddForce(dir * sp, 8);
         }
-        if( left ){
+        if( left > 0.0 ){
             Vector<3,float> dir = -m.GetRow(2) * delta;
-            box->AddForce(dir * turn, 2);
-            box->AddForce(dir * turn, 4);
+            float tu = turn * left;
+            box->AddForce(dir * tu, 2);
+            box->AddForce(dir * tu, 4);
         }
-        if( right ) {
+        if( right > 0.0) {
             Vector<3,float> dir = m.GetRow(2) * delta;
-            box->AddForce(dir * turn, 1);
-            box->AddForce(dir * turn, 3);
+            float tu = turn * right;
+            box->AddForce(dir * tu, 1);
+            box->AddForce(dir * tu, 3);
         }
     }
 
@@ -97,7 +108,24 @@ public:
         (arg.type == OpenEngine::Devices::EVENT_PRESS) ? KeyDown(arg) : KeyUp(arg);
     }
 
+    void Handle(JoystickAxisEventArg arg) {
+        float max = 1 << 15;
+        float thres1 = 0.1;
+
+        up = (-arg.state.axisState[1])/max;
+        if (up < thres1) up = 0.0;
+        down = (arg.state.axisState[1])/max;
+        if (down < thres1) down = 0.0;
+
+        left = (-arg.state.axisState[0])/max;
+        if (left < thres1) left = 0.0;
+        right = (arg.state.axisState[0])/max;
+        if (right < thres1) right = 0.0;
+
+    }
+
     void KeyDown(KeyboardEventArg arg) {
+
         switch ( arg.sym ) {
         case keys::KEY_r: {
             physics->Handle(InitializeEventArg());
@@ -118,10 +146,10 @@ public:
             break;
         }
         // Move the car forward
-        case keys::KEY_UP:    up    = true; break;
-        case keys::KEY_DOWN:  down  = true; break;
-        case keys::KEY_LEFT:  left  = true; break;
-        case keys::KEY_RIGHT: right = true; break;
+        case keys::KEY_UP:    up    = 1.0; break;
+        case keys::KEY_DOWN:  down  = 1.0; break;
+        case keys::KEY_LEFT:  left  = 1.0; break;
+        case keys::KEY_RIGHT: right = 1.0; break;
 
         // Log Camera position 
         case keys::KEY_c: {
@@ -145,10 +173,10 @@ public:
 
     void KeyUp(KeyboardEventArg arg) {
         switch ( arg.sym ) {
-        case keys::KEY_UP:    up    = false; break;
-        case keys::KEY_DOWN:  down  = false; break;
-        case keys::KEY_LEFT:  left  = false; break;
-        case keys::KEY_RIGHT: right = false; break;
+        case keys::KEY_UP:    up    = 0.0; break;
+        case keys::KEY_DOWN:  down  = 0.0; break;
+        case keys::KEY_LEFT:  left  = 0.0; break;
+        case keys::KEY_RIGHT: right = 0.0; break;
         case keys::KEY_PLUS:  mod   = false; break;
         case keys::KEY_MINUS: mod   = false; break;
 

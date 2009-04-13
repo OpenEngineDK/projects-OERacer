@@ -21,6 +21,7 @@
 
 // Display structures
 #include <Display/FollowCamera.h>
+#include <Display/TrackingCamera.h>
 #include <Display/InterpolatedViewingVolume.h>
 #include <Display/ViewingVolume.h>
 
@@ -47,10 +48,16 @@
 
 #include <Utils/MoveHandler.h>
 #include <Utils/Statistics.h>
+#include <Utils/RenderStateHandler.h>
 
 // FixedTimeStepPhysics extension
 #include <Physics/FixedTimeStepPhysics.h>
 #include <Physics/RigidBox.h>
+
+#include <Display/QtEnvironment.h>
+#include <Display/RenderStateGUI.h>
+#include <Display/SceneGraphGUI.h>
+#include <Utils/FPSGUI.h>
 
 // OERacer utility files
 #include "KeyboardHandler.h"
@@ -68,8 +75,12 @@ using OpenEngine::Renderers::OpenGL::RenderingView;
 
 // Configuration structure to pass around to the setup methods
 struct Config {
+    QtEnvironment*        env;
     SimpleSetup           setup;
     FollowCamera*         camera;
+    TrackingCamera*       cam_br;
+    TrackingCamera*       cam_tr;
+    TrackingCamera*       cam_tl;
     ISceneNode*           renderingScene;
     ISceneNode*           dynamicScene;
     ISceneNode*           staticScene;
@@ -77,7 +88,10 @@ struct Config {
     RigidBox*             physicBody;
     FixedTimeStepPhysics* physics;
     Config()
-        : setup(SimpleSetup("<<OpenEngine Racer>>", new Viewport(0,0,400,300)))
+        : env(new QtEnvironment(800,600))
+        , setup(SimpleSetup("<<OpenEngine Racer>>"
+                            , new Viewport(0,0,400,300)
+                            , env))
         , camera(NULL)
         , renderingScene(NULL)
         , dynamicScene(NULL)
@@ -97,6 +111,7 @@ void SetupPhysics(Config&);
 void SetupRendering(Config&);
 void SetupDevices(Config&);
 void SetupDebugging(Config&);
+void SetupGUI(Config&);
 
 int main(int argc, char** argv) {
 
@@ -128,7 +143,8 @@ int main(int argc, char** argv) {
     SetupPhysics(config);
     SetupRendering(config);
     SetupDevices(config);
-    
+    SetupGUI(config);
+
     // Possibly add some debugging stuff
     //config.setup.EnableDebugging();
     //SetupDebugging(config);
@@ -147,6 +163,15 @@ void SetupResources(Config& config) {
 void SetupDisplay(Config& config) {
     config.camera  = new FollowCamera( *(new InterpolatedViewingVolume(*config.setup.GetCamera() )));
     config.setup.SetCamera(*config.camera);
+    
+    // config.cam_br = new TrackingCamera(*(new InterpolatedViewingVolume(*(new ViewingVolume()))));
+    // config.cam_tr = new TrackingCamera(*(new InterpolatedViewingVolume(*(new ViewingVolume()))));
+    // config.cam_tl = new TrackingCamera(*(new InterpolatedViewingVolume(*(new ViewingVolume()))));
+
+    config.cam_br = new TrackingCamera(*(new ViewingVolume()));
+    config.cam_tr = new TrackingCamera(*(new ViewingVolume()));
+    config.cam_tl = new TrackingCamera(*(new ViewingVolume()));
+
 }
 
 void SetupRendering(Config& config) {
@@ -171,35 +196,37 @@ void SetupRendering(Config& config) {
     int height = 600;
 
     // bottom right
-    Camera* cam_br = new Camera(*(new ViewingVolume()));
-    cam_br->SetPosition(Vector<3,float>(1000,1000,1000));
-    cam_br->LookAt(0,0,0);
+
+
+    config.cam_br->SetPosition(Vector<3,float>(1000,1000,1000));
+    config.cam_br->LookAt(0,0,0);
+
     Viewport* vp_br = new Viewport(width/2,0, width,height/2);
-    vp_br->SetViewingVolume(cam_br);
+    vp_br->SetViewingVolume(config.cam_br);
     RenderingView* rv_br = new RenderingView(*vp_br);
     config.setup.GetRenderer().ProcessEvent().Attach(*rv_br);
 
     // top right
-    Camera* cam_tr = new Camera(*(new ViewingVolume()));
-    cam_tr->SetPosition(Vector<3,float>(0,2000,0));
-    cam_tr->LookAt(0,0,0);
+    //Camera* cam_tr = new Camera(*(new ViewingVolume()));
+    config.cam_tr->SetPosition(Vector<3,float>(0,2000,0));
+    config.cam_tr->LookAt(0,0,0);
     Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
-    vp_tr->SetViewingVolume(cam_tr);
+    vp_tr->SetViewingVolume(config.cam_tr);
     RenderingView* rv_tr = new RenderingView(*vp_tr);
     config.setup.GetRenderer().ProcessEvent().Attach(*rv_tr);
 
     // top left
-    Camera* cam_tl = new Camera(*(new ViewingVolume()));
-    cam_tl->SetPosition(Vector<3,float>(0,1000,0));
-    cam_tl->LookAt(0,0,0);
+    //Camera* cam_tl = new Camera(*(new ViewingVolume()));
+    config.cam_tl->SetPosition(Vector<3,float>(0,1000,0));
+    config.cam_tl->LookAt(0,0,0);
     Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
-    vp_tl->SetViewingVolume(cam_tl);
+    vp_tl->SetViewingVolume(config.cam_tl);
     RenderingView* rv_tl = new RenderingView(*vp_tl);
     config.setup.GetRenderer().ProcessEvent().Attach(*rv_tl);
 }
 
 void SetupDevices(Config& config) {
-    // Register movement handler to be able to move the camera
+    //Register movement handler to be able to move the camera
     MoveHandler* move_h = new MoveHandler(*config.camera, config.setup.GetMouse());
     config.setup.GetKeyboard().KeyEvent().Attach(*move_h);
 
@@ -209,6 +236,7 @@ void SetupDevices(Config& config) {
                                                       config.physicBody,
                                                       config.physics);
     config.setup.GetKeyboard().KeyEvent().Attach(*keyHandler);
+    config.setup.GetJoystick().JoystickAxisEvent().Attach(*keyHandler);
 
     config.setup.GetEngine().InitializeEvent().Attach(*keyHandler);
     config.setup.GetEngine().ProcessEvent().Attach(*keyHandler);
@@ -216,6 +244,9 @@ void SetupDevices(Config& config) {
 
     config.setup.GetEngine().InitializeEvent().Attach(*move_h);
     config.setup.GetEngine().ProcessEvent().Attach(*move_h);
+    
+    config.setup.GetMouse().MouseMovedEvent().Attach(*move_h);
+
     config.setup.GetEngine().DeinitializeEvent().Attach(*move_h);
 }
 
@@ -262,6 +293,20 @@ void SetupPhysics(Config& config) {
     config.setup.GetEngine().DeinitializeEvent().Attach(*config.physics);
 }
 
+void SetupGUI(Config& config) {
+    FPSGUI* fps = new FPSGUI(100000);
+    config.setup.GetEngine().ProcessEvent().Attach(*fps);
+    config.env->AddWidget(fps);
+
+    SceneGraphGUI* sg = new SceneGraphGUI(config.renderingScene);
+    config.setup.GetEngine().InitializeEvent().Attach(*sg);
+    sg->setMinimumWidth(200);
+    config.env->AddWidget(sg);
+
+
+
+}
+
 void SetupScene(Config& config) {
     if (config.dynamicScene    != NULL ||
         config.staticScene     != NULL ||
@@ -270,7 +315,33 @@ void SetupScene(Config& config) {
         throw Exception("Setup scene dependencies are not satisfied.");
 
     // Create scene nodes
-    config.renderingScene = new SceneNode();
+    RenderStateNode* rn = new RenderStateNode();
+
+    RenderStateGUI* rg = new RenderStateGUI(*rn);
+    config.env->AddWidget(rg);
+    
+
+    rn->DisableOption(RenderStateNode::WIREFRAME);
+    rn->DisableOption(RenderStateNode::SOFT_NORMAL);
+    rn->DisableOption(RenderStateNode::HARD_NORMAL);
+    rn->DisableOption(RenderStateNode::BINORMAL);
+    rn->DisableOption(RenderStateNode::TANGENT);
+    rn->DisableOption(RenderStateNode::BACKFACE);
+                      
+    rn->EnableOption(RenderStateNode::TEXTURE);
+    rn->EnableOption(RenderStateNode::SHADER);
+    
+
+    config.renderingScene = rn;
+    
+    RenderStateHandler* rh = new RenderStateHandler(*rn);
+    //config.setup.GetKeyboard().KeyEvent().Attach(*rh);
+
+
+    RenderStateHandler::KeyboardMap* map = new RenderStateHandler::KeyboardMap(*rh);
+    //map->onKeyEvent(KEY_F1, EVENT_PRESS, *rh);
+    config.setup.GetKeyboard().KeyEvent().Attach(*map);
+
     config.dynamicScene = new SceneNode();
     config.staticScene = new SceneNode();
     config.physicScene = new SceneNode();
@@ -326,11 +397,16 @@ void SetupScene(Config& config) {
             config.physicBody = new RigidBox( Box(*mod_node));
             config.physicBody->SetCenter( position );
             config.physicBody->SetTransformationNode(mod_tran);
-	    config.physicBody->SetGravity(Vector<3,float>(0, -9.82*20, 0));
+            config.physicBody->SetGravity(Vector<3,float>(0, -9.82*20, 0));
             // Bind the follow camera
             config.camera->SetPosition(position + Vector<3,float>(-150,40,0));
             config.camera->LookAt(position - Vector<3,float>(0,30,0));
             config.camera->Follow(mod_tran);
+            // bind the tracking cameras
+            config.cam_br->Follow(mod_tran);
+            config.cam_tr->Follow(mod_tran);
+            config.cam_tl->Follow(mod_tran);
+
             // Set up a light node
             PointLightNode* pln = new PointLightNode();
             pln->constAtt = 0.5;
@@ -358,7 +434,7 @@ void SetupDebugging(Config& config) {
     }
 
     // Add Statistics module
-    //config.engine.ProcessEvent().Attach(*(new OpenEngine::Utils::Statistics(1000)));
+    config.setup.GetEngine().ProcessEvent().Attach(*(new OpenEngine::Utils::Statistics(100000)));
 
     // Create dot graphs of the various scene graphs
     map<string, ISceneNode*> scenes;
