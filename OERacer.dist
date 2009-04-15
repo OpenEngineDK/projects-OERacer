@@ -14,7 +14,7 @@ darcs /extensions/SetupHelpers           http://openengine.dk/code/extensions/Se
 darcs /extensions/HUD                    http://openengine.dk/code/extensions/HUD
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
 darcs /extensions/Qt                     http://openengine.dk/code/extensions/Qt
-darcs /extensions/ActionMappers          http://openengine.dk/code/extensions/AcionMappers
+darcs /extensions/ActionMappers          http://openengine.dk/code/extensions/ActionMappers
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/TGAResource            http://openengine.dk/code/extensions/TGAResource
 darcs /extensions/OBJResource            http://openengine.dk/code/extensions/OBJResource
