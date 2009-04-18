@@ -57,6 +57,7 @@
 #include <Display/QtEnvironment.h>
 #include <Display/RenderStateGUI.h>
 #include <Display/SceneGraphGUI.h>
+#include <Display/SceneNodeGUI.h>
 #include <Utils/FPSGUI.h>
 
 // OERacer utility files
@@ -297,6 +298,9 @@ void SetupGUI(Config& config) {
     FPSGUI* fps = new FPSGUI(100000);
     config.setup.GetEngine().ProcessEvent().Attach(*fps);
     config.env->AddWidget(fps);
+
+    SceneNodeGUI* ngui = new SceneNodeGUI();
+    config.env->AddWidget(ngui);
 
     SceneGraphGUI* sg = new SceneGraphGUI(config.renderingScene);
     config.setup.GetEngine().InitializeEvent().Attach(*sg);
