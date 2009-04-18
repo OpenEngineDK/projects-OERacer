@@ -299,13 +299,16 @@ void SetupGUI(Config& config) {
     config.setup.GetEngine().ProcessEvent().Attach(*fps);
     config.env->AddWidget(fps);
 
-    SceneNodeGUI* ngui = new SceneNodeGUI();
-    config.env->AddWidget(ngui);
-
     SceneGraphGUI* sg = new SceneGraphGUI(config.renderingScene);
     config.setup.GetEngine().InitializeEvent().Attach(*sg);
     sg->setMinimumWidth(200);
     config.env->AddWidget(sg);
+
+
+    SceneNodeGUI* ngui = new SceneNodeGUI();
+    sg->SelectionEvent().Attach(*ngui);
+    config.env->AddWidget(ngui);
+
 
 
 
