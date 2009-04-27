@@ -21,5 +21,4 @@ TARGET_LINK_LIBRARIES(OERacer
   Extensions_SetupHelpers
   Extensions_FixedTimeStepPhysics
   Extensions_GenericHandlers
-  Extensions_Qt
 )

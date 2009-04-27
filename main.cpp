@@ -54,12 +54,6 @@
 #include <Physics/FixedTimeStepPhysics.h>
 #include <Physics/RigidBox.h>
 
-#include <Display/QtEnvironment.h>
-#include <Display/RenderStateGUI.h>
-#include <Display/SceneGraphGUI.h>
-#include <Display/SceneNodeGUI.h>
-#include <Utils/FPSGUI.h>
-
 // OERacer utility files
 #include "KeyboardHandler.h"
 
@@ -76,7 +70,6 @@ using OpenEngine::Renderers::OpenGL::RenderingView;
 
 // Configuration structure to pass around to the setup methods
 struct Config {
-    QtEnvironment*        env;
     SimpleSetup           setup;
     FollowCamera*         camera;
     TrackingCamera*       cam_br;
@@ -89,10 +82,8 @@ struct Config {
     RigidBox*             physicBody;
     FixedTimeStepPhysics* physics;
     Config()
-        : env(new QtEnvironment(800,600))
-        , setup(SimpleSetup("<<OpenEngine Racer>>"
-                            , new Viewport(0,0,400,300)
-                            , env))
+        : setup(SimpleSetup("<<OpenEngine Racer>>"
+                            , new Viewport(0,0,400,300)))
         , camera(NULL)
         , renderingScene(NULL)
         , dynamicScene(NULL)
@@ -112,7 +103,6 @@ void SetupPhysics(Config&);
 void SetupRendering(Config&);
 void SetupDevices(Config&);
 void SetupDebugging(Config&);
-void SetupGUI(Config&);
 
 int main(int argc, char** argv) {
 
@@ -144,7 +134,6 @@ int main(int argc, char** argv) {
     SetupPhysics(config);
     SetupRendering(config);
     SetupDevices(config);
-    SetupGUI(config);
 
     // Possibly add some debugging stuff
     //config.setup.EnableDebugging();
@@ -294,26 +283,6 @@ void SetupPhysics(Config& config) {
     config.setup.GetEngine().DeinitializeEvent().Attach(*config.physics);
 }
 
-void SetupGUI(Config& config) {
-    FPSGUI* fps = new FPSGUI(100000);
-    config.setup.GetEngine().ProcessEvent().Attach(*fps);
-    config.env->AddWidget(fps);
-
-    SceneGraphGUI* sg = new SceneGraphGUI(config.renderingScene);
-    config.setup.GetEngine().InitializeEvent().Attach(*sg);
-    sg->setMinimumWidth(200);
-    config.env->AddWidget(sg);
-
-
-    SceneNodeGUI* ngui = new SceneNodeGUI();
-    sg->SelectionEvent().Attach(*ngui);
-    config.env->AddWidget(ngui);
-
-
-
-
-}
-
 void SetupScene(Config& config) {
     if (config.dynamicScene    != NULL ||
         config.staticScene     != NULL ||
@@ -323,10 +292,6 @@ void SetupScene(Config& config) {
 
     // Create scene nodes
     RenderStateNode* rn = new RenderStateNode();
-
-    RenderStateGUI* rg = new RenderStateGUI(*rn);
-    config.env->AddWidget(rg);
-    
 
     rn->DisableOption(RenderStateNode::WIREFRAME);
     rn->DisableOption(RenderStateNode::SOFT_NORMAL);
