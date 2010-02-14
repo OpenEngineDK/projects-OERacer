@@ -10,12 +10,6 @@
 // OpenEngine stuff
 #include <Meta/Config.h>
 
-// Include the serialization header
-// The archives must be defined before any serializable objects so
-// this must be first.
-#include <Utils/Serialization.h>
-#include <fstream>
-
 // Simple setup of a rendering engine
 #include <Utils/SimpleSetup.h>
 
@@ -54,6 +48,10 @@
 #include <Physics/FixedTimeStepPhysics.h>
 #include <Physics/RigidBox.h>
 
+// Serialization utilities
+#include <Resources/StreamArchive.h>
+#include <fstream>
+
 // OERacer utility files
 #include "KeyboardHandler.h"
 
@@ -81,6 +79,7 @@ struct Config {
     ISceneNode*           physicScene;
     RigidBox*             physicBody;
     FixedTimeStepPhysics* physics;
+    bool                  serialize;
     Config()
         : setup(SimpleSetup("<<OpenEngine Racer>>"
                             , new Viewport(0,0,400,300)))
@@ -90,6 +89,7 @@ struct Config {
         , staticScene(NULL)
         , physicScene(NULL)
         , physics(NULL)
+        , serialize(false)
     {
         
     }
@@ -245,17 +245,37 @@ void SetupPhysics(Config& config) {
         config.physicScene == NULL)
         throw Exception("Physics dependencies are not satisfied.");
 
-    ifstream isf("oeracer-physics-scene.bin", ios::binary);
-    if (isf.is_open()) {
-        logger.info << "Loading the physics tree from file: started" << logger.end;
-        delete config.physicScene;
-        config.physicScene = new SceneNode();
-        Serialization::Deserialize(*config.physicScene, &isf);
-        isf.close();
-        logger.info << "Loading the physics tree from file: done" << logger.end;
+    if (config.serialize) {
+        ifstream isf("oeracer-physics-scene.bin", ios::binary);
+        if (isf.is_open()) {
+            logger.info << "Loading the physics tree from file: started"
+                        << logger.end;
+            delete config.physicScene;
+            StreamArchiveReader reader(isf);
+            config.physicScene = reader.ReadScene("physics");
+            isf.close();
+            logger.info << "Loading the physics tree from file: done"
+                        << logger.end;
+        } else {
+            isf.close();
+            logger.info << "Creating and serializing the physics tree: started"
+                        << logger.end;
+            // transform the object tree to a hybrid Quad/BSP
+            CollectedGeometryTransformer collT;
+            QuadTransformer quadT;
+            BSPTransformer bspT;
+            collT.Transform(*config.physicScene);
+            quadT.Transform(*config.physicScene);
+            bspT.Transform(*config.physicScene);
+            // serialize the scene
+            ofstream of("oeracer-physics-scene.bin");
+            StreamArchiveWriter writer(of);
+            writer.WriteScene("physics", config.physicScene);
+            of.close();
+            logger.info << "Creating and serializing the physics tree: done"
+                        << logger.end;
+        }
     } else {
-        isf.close();
-        logger.info << "Creating and serializing the physics tree: started" << logger.end;
         // transform the object tree to a hybrid Quad/BSP
         CollectedGeometryTransformer collT;
         QuadTransformer quadT;
@@ -263,12 +283,6 @@ void SetupPhysics(Config& config) {
         collT.Transform(*config.physicScene);
         quadT.Transform(*config.physicScene);
         bspT.Transform(*config.physicScene);
-        // serialize the scene
-        const ISceneNode& tmp = *config.physicScene;
-        ofstream of("oeracer-physics-scene.bin");
-        Serialization::Serialize(tmp, &of);
-        of.close();
-        logger.info << "Creating and serializing the physics tree: done" << logger.end;
     }
     
     config.physics = new FixedTimeStepPhysics(config.physicScene);
