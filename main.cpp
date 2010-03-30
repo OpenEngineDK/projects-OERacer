@@ -49,7 +49,7 @@
 #include <Physics/RigidBox.h>
 
 // Serialization utilities
-#include <Resources/StreamArchive.h>
+#include <Resources/BinaryStreamArchive.h>
 #include <fstream>
 
 // OERacer utility files
@@ -89,7 +89,7 @@ struct Config {
         , staticScene(NULL)
         , physicScene(NULL)
         , physics(NULL)
-        , serialize(false)
+        , serialize(true)
     {
         
     }
@@ -251,7 +251,7 @@ void SetupPhysics(Config& config) {
             logger.info << "Loading the physics tree from file: started"
                         << logger.end;
             delete config.physicScene;
-            StreamArchiveReader reader(isf);
+            BinaryStreamArchiveReader reader(isf);
             config.physicScene = reader.ReadScene("physics");
             isf.close();
             logger.info << "Loading the physics tree from file: done"
@@ -268,10 +268,10 @@ void SetupPhysics(Config& config) {
             quadT.Transform(*config.physicScene);
             bspT.Transform(*config.physicScene);
             // serialize the scene
-            ofstream of("oeracer-physics-scene.bin");
-            StreamArchiveWriter writer(of);
-            writer.WriteScene("physics", config.physicScene);
-            of.close();
+            // ofstream of("oeracer-physics-scene.bin");
+            // BinaryStreamArchiveWriter writer(of);
+            // writer.WriteScene("physics", config.physicScene);
+            // of.close();
             logger.info << "Creating and serializing the physics tree: done"
                         << logger.end;
         }
