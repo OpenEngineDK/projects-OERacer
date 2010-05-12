@@ -54,12 +54,12 @@ public:
         , engine(engine)
     {}
 
-    void Handle(InitializeEventArg arg) {
+    void Handle(Core::InitializeEventArg arg) {
         step = 0.0f;
         timer.Start();
     }
-    void Handle(DeinitializeEventArg arg) {}
-    void Handle(ProcessEventArg arg) {
+    void Handle(Core::DeinitializeEventArg arg) {}
+    void Handle(Core::ProcessEventArg arg) {
 
 
         float delta = (float) timer.GetElapsedTimeAndReset().AsInt() / 100000;
@@ -128,7 +128,7 @@ public:
 
         switch ( arg.sym ) {
         case keys::KEY_r: {
-            physics->Handle(InitializeEventArg());
+            physics->Handle(Core::InitializeEventArg());
             if( physics != NULL ){
                 if( box != NULL ) {
                     box->ResetForces();

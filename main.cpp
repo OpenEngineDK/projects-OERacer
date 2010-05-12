@@ -14,14 +14,18 @@
 #include <Utils/SimpleSetup.h>
 
 // Display structures
+#include <Display/IFrame.h>
+#include <Display/OpenGL/SplitScreenCanvas.h>
+#include <Display/OpenGL/ColorStereoCanvas.h>
 #include <Display/FollowCamera.h>
 #include <Display/TrackingCamera.h>
 #include <Display/InterpolatedViewingVolume.h>
 #include <Display/ViewingVolume.h>
+#include <Display/OpenGL/RenderCanvas.h>
 
 // Rendering structures
 #include <Renderers/OpenGL/RenderingView.h>
-
+#include <Renderers/OpenGL/Renderer.h>
 // Resources
 #include <Resources/IModelResource.h>
 #include <Resources/ResourceManager.h>
@@ -64,7 +68,9 @@ using namespace OpenEngine::Resources;
 using namespace OpenEngine::Utils;
 using namespace OpenEngine::Physics;
 
-using OpenEngine::Renderers::OpenGL::RenderingView;
+using OpenEngine::Display::OpenGL::RenderCanvas;
+using OpenEngine::Display::OpenGL::SplitScreenCanvas;
+using OpenEngine::Display::OpenGL::ColorStereoCanvas;
 
 // Configuration structure to pass around to the setup methods
 struct Config {
@@ -81,8 +87,12 @@ struct Config {
     FixedTimeStepPhysics* physics;
     bool                  serialize;
     Config()
-        : setup(SimpleSetup("<<OpenEngine Racer>>"
-                            , new Viewport(0,0,400,300)))
+        : setup(SimpleSetup("<<OpenEngine Racer>>"))
+                            //, new Viewport(0,0,400,300)))
+                            // , new SDLEnvironment(800,600)
+                            // , new RenderingView()
+                            // , new Engine()
+                            // , new Renderer())
         , camera(NULL)
         , renderingScene(NULL)
         , dynamicScene(NULL)
@@ -166,12 +176,12 @@ void SetupDisplay(Config& config) {
 
 void SetupRendering(Config& config) {
     // Add rendering initialization tasks
-    DisplayListTransformer* dlt =
-        new DisplayListTransformer(
-            new RenderingView(
-                *(new Viewport(config.setup.GetFrame()))));
+    // DisplayListTransformer* dlt =
+    //     new DisplayListTransformer(
+    //         new RenderingView(
+    //             *(new Viewport(config.setup.GetFrame()))));
     //config.renderer->InitializeEvent().Attach(*tl);
-    config.setup.GetRenderer().InitializeEvent().Attach(*dlt);
+    // config.setup.GetRenderer().InitializeEvent().Attach(*dlt);
 
     // Transform the scene to use vertex arrays
     VertexArrayTransformer vaT;
@@ -181,38 +191,44 @@ void SetupRendering(Config& config) {
     delete config.setup.GetScene();
     config.setup.SetScene(*config.renderingScene);
 
-    //add frustrum cameras
-    int width = 800;
-    int height = 600;
+    // bottom left
+    IRenderCanvas* _c1 = config.setup.GetCanvas();
+    IRenderer* r = _c1->GetRenderer();
+
+    IRenderCanvas* c1 = new ColorStereoCanvas();
+    c1->SetRenderer(r);
+    c1->SetScene(_c1->GetScene());
+    c1->SetViewingVolume(_c1->GetViewingVolume());
 
     // bottom right
-
-
+    IRenderCanvas* c2 = new RenderCanvas();
+    c2->SetViewingVolume(config.cam_br);
+    c2->SetRenderer(r);
+    c2->SetScene(config.renderingScene);
     config.cam_br->SetPosition(Vector<3,float>(1000,1000,1000));
     config.cam_br->LookAt(0,0,0);
 
-    Viewport* vp_br = new Viewport(width/2,0, width,height/2);
-    vp_br->SetViewingVolume(config.cam_br);
-    RenderingView* rv_br = new RenderingView(*vp_br);
-    config.setup.GetRenderer().ProcessEvent().Attach(*rv_br);
-
     // top right
-    //Camera* cam_tr = new Camera(*(new ViewingVolume()));
+    IRenderCanvas* c3 = new RenderCanvas();
+    c3->SetViewingVolume(config.cam_tr);
+    c3->SetRenderer(r);
+    c3->SetScene(config.renderingScene);
     config.cam_tr->SetPosition(Vector<3,float>(0,2000,0));
     config.cam_tr->LookAt(0,0,0);
-    Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
-    vp_tr->SetViewingVolume(config.cam_tr);
-    RenderingView* rv_tr = new RenderingView(*vp_tr);
-    config.setup.GetRenderer().ProcessEvent().Attach(*rv_tr);
+
 
     // top left
-    //Camera* cam_tl = new Camera(*(new ViewingVolume()));
+    IRenderCanvas* c4 = new RenderCanvas();
+    c4->SetViewingVolume(config.cam_tl);
+    c4->SetRenderer(r);
+    c4->SetScene(config.renderingScene);
     config.cam_tl->SetPosition(Vector<3,float>(0,1000,0));
     config.cam_tl->LookAt(0,0,0);
-    Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
-    vp_tl->SetViewingVolume(config.cam_tl);
-    RenderingView* rv_tl = new RenderingView(*vp_tl);
-    config.setup.GetRenderer().ProcessEvent().Attach(*rv_tl);
+
+    SplitScreenCanvas* left = new SplitScreenCanvas(*c4, *c1, SplitScreenCanvas::HORIZONTAL);
+    SplitScreenCanvas* right = new SplitScreenCanvas(*c3, *c2, SplitScreenCanvas::HORIZONTAL);
+    SplitScreenCanvas* canvas = new SplitScreenCanvas(*left, *right);
+    config.setup.GetFrame().SetCanvas(canvas);
 }
 
 void SetupDevices(Config& config) {
