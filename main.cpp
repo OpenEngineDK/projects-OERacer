@@ -21,7 +21,8 @@
 #include <Display/TrackingCamera.h>
 #include <Display/InterpolatedViewingVolume.h>
 #include <Display/ViewingVolume.h>
-#include <Display/OpenGL/RenderCanvas.h>
+#include <Display/RenderCanvas.h>
+#include <Display/OpenGL/TextureCopy.h>
 
 // Rendering structures
 #include <Renderers/OpenGL/RenderingView.h>
@@ -68,7 +69,8 @@ using namespace OpenEngine::Resources;
 using namespace OpenEngine::Utils;
 using namespace OpenEngine::Physics;
 
-using OpenEngine::Display::OpenGL::RenderCanvas;
+using OpenEngine::Display::RenderCanvas;
+using OpenEngine::Display::OpenGL::TextureCopy;
 using OpenEngine::Display::OpenGL::SplitScreenCanvas;
 using OpenEngine::Display::OpenGL::ColorStereoCanvas;
 
@@ -195,13 +197,13 @@ void SetupRendering(Config& config) {
     IRenderCanvas* _c1 = config.setup.GetCanvas();
     IRenderer* r = _c1->GetRenderer();
 
-    IRenderCanvas* c1 = new ColorStereoCanvas();
+    IRenderCanvas* c1 = new ColorStereoCanvas(new TextureCopy());
     c1->SetRenderer(r);
     c1->SetScene(_c1->GetScene());
     c1->SetViewingVolume(_c1->GetViewingVolume());
 
     // bottom right
-    IRenderCanvas* c2 = new RenderCanvas();
+    IRenderCanvas* c2 = new RenderCanvas(new TextureCopy());
     c2->SetViewingVolume(config.cam_br);
     c2->SetRenderer(r);
     c2->SetScene(config.renderingScene);
@@ -209,7 +211,7 @@ void SetupRendering(Config& config) {
     config.cam_br->LookAt(0,0,0);
 
     // top right
-    IRenderCanvas* c3 = new RenderCanvas();
+    IRenderCanvas* c3 = new RenderCanvas(new TextureCopy());
     c3->SetViewingVolume(config.cam_tr);
     c3->SetRenderer(r);
     c3->SetScene(config.renderingScene);
@@ -218,16 +220,16 @@ void SetupRendering(Config& config) {
 
 
     // top left
-    IRenderCanvas* c4 = new RenderCanvas();
+    IRenderCanvas* c4 = new RenderCanvas(new TextureCopy());
     c4->SetViewingVolume(config.cam_tl);
     c4->SetRenderer(r);
     c4->SetScene(config.renderingScene);
     config.cam_tl->SetPosition(Vector<3,float>(0,1000,0));
     config.cam_tl->LookAt(0,0,0);
 
-    SplitScreenCanvas* left = new SplitScreenCanvas(*c4, *c1, SplitScreenCanvas::HORIZONTAL);
-    SplitScreenCanvas* right = new SplitScreenCanvas(*c3, *c2, SplitScreenCanvas::HORIZONTAL);
-    SplitScreenCanvas* canvas = new SplitScreenCanvas(*left, *right);
+    SplitScreenCanvas* left = new SplitScreenCanvas(new TextureCopy(), *c4, *c1, SplitScreenCanvas::HORIZONTAL);
+    SplitScreenCanvas* right = new SplitScreenCanvas(new TextureCopy(), *c3, *c2, SplitScreenCanvas::HORIZONTAL);
+    SplitScreenCanvas* canvas = new SplitScreenCanvas(new TextureCopy(), *left, *right);
     config.setup.GetFrame().SetCanvas(canvas);
 }
 
