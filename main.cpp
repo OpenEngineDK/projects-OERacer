@@ -286,10 +286,10 @@ void SetupPhysics(Config& config) {
             quadT.Transform(*config.physicScene);
             bspT.Transform(*config.physicScene);
             // serialize the scene
-            // ofstream of("oeracer-physics-scene.bin");
-            // BinaryStreamArchiveWriter writer(of);
-            // writer.WriteScene("physics", config.physicScene);
-            // of.close();
+            ofstream of("oeracer-physics-scene.bin");
+            BinaryStreamArchiveWriter writer(of);
+            writer.WriteScene("physics", config.physicScene);
+            of.close();
             logger.info << "Creating and serializing the physics tree: done"
                         << logger.end;
         }
@@ -339,12 +339,7 @@ void SetupScene(Config& config) {
     config.renderingScene = rn;
     
     RenderStateHandler* rh = new RenderStateHandler(*rn);
-    //config.setup.GetKeyboard().KeyEvent().Attach(*rh);
-
-
-    RenderStateHandler::KeyboardMap* map = new RenderStateHandler::KeyboardMap(*rh);
-    //map->onKeyEvent(KEY_F1, EVENT_PRESS, *rh);
-    config.setup.GetKeyboard().KeyEvent().Attach(*map);
+    config.setup.GetKeyboard().KeyEvent().Attach(*rh);
 
     config.dynamicScene = new SceneNode();
     config.staticScene = new SceneNode();
@@ -359,7 +354,7 @@ void SetupScene(Config& config) {
     Vector<3,float> position(2, 100, 2);
 
     // Add models from models.txt to the scene
-    ifstream* mfile = File::Open("projects/OERacer/models.txt");
+    ifstream* mfile = File::Open(DirectoryManager::FindFileInPath("projects/OERacer/models.txt"));
     
     bool dynamic = false;
     while (!mfile->eof()) {
@@ -407,9 +402,9 @@ void SetupScene(Config& config) {
             config.camera->LookAt(position - Vector<3,float>(0,30,0));
             config.camera->Follow(mod_tran);
             // bind the tracking cameras
-            config.cam_br->Follow(mod_tran);
-            config.cam_tr->Follow(mod_tran);
-            config.cam_tl->Follow(mod_tran);
+            config.cam_br->Track(mod_tran);
+            config.cam_tr->Track(mod_tran);
+            config.cam_tl->Track(mod_tran);
 
             // Set up a light node
             PointLightNode* pln = new PointLightNode();
