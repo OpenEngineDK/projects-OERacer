@@ -18,7 +18,6 @@ darcs /extensions/ActionMappers          http://openengine.dk/code/extensions/Ac
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/TGAResource            http://openengine.dk/code/extensions/TGAResource
 darcs /extensions/OBJResource            http://openengine.dk/code/extensions/OBJResource
-darcs /extensions/ColladaResource        http://openengine.dk/code/extensions/ColladaResource
 darcs /extensions/FixedTimeStepPhysics   http://openengine.dk/code/extensions/FixedTimeStepPhysics
 darcs /extensions/AccelerationStructures http://openengine.dk/code/extensions/AccelerationStructures
 darcs /extensions/GenericHandlers        http://openengine.dk/code/extensions/GenericHandlers
@@ -32,7 +31,6 @@ darcs-dev /extensions/ActionMappers          fh.daimi.au.dk:/users/cgd/code/exte
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
 darcs-dev /extensions/OBJResource            fh.daimi.au.dk:/users/cgd/code/extensions/OBJResource
-darcs-dev /extensions/ColladaResource        fh.daimi.au.dk:/users/cgd/code/extensions/ColladaResource
 darcs-dev /extensions/AccelerationStructures fh.daimi.au.dk:/users/cgd/code/extensions/AccelerationStructures
 darcs-dev /extensions/FixedTimeStepPhysics   fh.daimi.au.dk:/users/cgd/code/extensions/FixedTimeStepPhysics
 darcs-dev /extensions/GenericHandlers        fh.daimi.au.dk:/users/cgd/code/extensions/GenericHandlers
@@ -43,15 +41,6 @@ win32 /libraries http://openengine.dk/data/libraries/boost-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/glew-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/sdl-win32.zip
 win32 /libraries http://openengine.dk/data/libraries/dlls-win32.zip
-win   /libraries http://openengine.dk/data/libraries/colladadom2.1-win32.zip
-
-# darwin libraries
-darwin /libraries http://openengine.dk/data/libraries/colladadom2.1-osx-i32.zip
-darwin /libraries http://openengine.dk/data/libraries/pcre-osx-i32.zip
-darwin /libraries http://openengine.dk/data/libraries/pcrecpp-osx-i32.zip
-
-# linux libraries
-linux /libraries http://www.openengine.dk/data/libraries/collada-linux.tar.gz
 
 # project data
 any /projects/OERacer/data http://openengine.dk/data/models/Sahara001.zip
